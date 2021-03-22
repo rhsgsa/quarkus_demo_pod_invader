@@ -1,0 +1,136 @@
+#simplified version of pod-invader creation with mongo
+# TOKEN=$(oc whoami --show-token)
+# API_URL=$(oc whoami --show-server)
+# NAMESPACE=kahlai-dev
+# oc process -f pod-invader-template.yaml -p user=root -p password=password -p token=$TOKEN -p api_url=API_URL -p namespace=$NAMESPACE
+
+apiVersion: v1
+kind: Template
+metadata:
+  name: pod-invader-template
+objects:
+- apiVersion: apps/v1
+  kind: StatefulSet
+  metadata:
+    name: mongodb
+  spec:
+    serviceName: "mongodb"
+    selector:
+      matchLabels:
+        app: mongodb
+    replicas: 1
+    template:
+      metadata:
+        labels:
+          app: mongodb
+      spec:
+        containers:
+          - name: mongodb
+            image: mongo
+            env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: ${user}
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              value: ${password}
+            ports:
+              - containerPort: 27017
+            volumeMounts:
+            - name: mongodb
+              mountPath: /data/db
+    volumeClaimTemplates:
+    - metadata:
+        name: mongodb
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 1Gi
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: mongodb
+    labels:
+      app: mongodb
+  spec:
+    ports:
+    - port: 27017
+      name: mongodb
+    clusterIP: None
+    selector:
+      app: mongodb
+- kind: Deployment
+  apiVersion: apps/v1
+  metadata:
+    name: pod-invader
+    labels:
+      app: pod-invader
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: pod-invader
+    template:
+      metadata:
+        labels:
+          app: pod-invader
+      spec:
+        containers:
+          - name: pod-invader
+            serviceaccount: pod-invader-sa
+            image: quay.io/kahlai/pod-invader:0.0.13
+            env:
+            - name: NAMESPACE
+              value: ${namespace}
+            - name: TOKEN
+              value: ${token}
+            - name: API_ADDR
+              value: ${api_url}
+            readinessProbe:
+              tcpSocket:
+                port: 8080
+              initialDelaySeconds: 2
+              timeoutSeconds: 1
+              periodSeconds: 1
+              successThreshold: 1
+              failureThreshold: 3
+            livenessProbe:
+              tcpSocket:
+                port: 8080
+              initialDelaySeconds: 2
+              timeoutSeconds: 1
+              periodSeconds: 1
+              successThreshold: 1
+              failureThreshold: 3
+            ports:
+              - containerPort: 8080
+                protocol: TCP   
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: pod-invader
+    labels:
+      app: pod-invader
+    spec:
+      ports:
+        - name: 8080-tcp
+          protocol: TCP
+          port: 8080
+          targetPort: 8080
+      selector:
+        app: pod-invader       
+parameters:
+- description: Username for root user
+  value: 'root'
+  name: user
+- description: Password used for Mongo authentication
+  value: 'password'
+  name: password
+- description: API Endpoint Url to get pods list
+  value: 'https://kubernetes.default.svc'
+  name: api_url
+- description: Namespace to get pods list
+  value: 'namespace'
+  name: namespace
+- description: Token to get pods list
+  value: 'token'
+  name: token

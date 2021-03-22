@@ -1,0 +1,5 @@
+
+GET https://api.sandbox-m2.ll9k.p1.openshiftapps.com:6443/apis/user.openshift.io/v1/users/~ HTTP/1.1
+Authorization: Bearer sha256~MLdhFEjpCm82R4hHQiqQTmiqIjt7EQ9IMf9IT-mIYmc
+
+#

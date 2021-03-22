@@ -1,0 +1,13 @@
+
+GET https://api.sandbox-m2.ll9k.p1.openshiftapps.com:6443/api/v1/namespaces/kahlai-dev/pods HTTP/1.1
+Authorization: Bearer sha256~MLdhFEjpCm82R4hHQiqQTmiqIjt7EQ9IMf9IT-mIYmc
+
+###
+
+GET https://api.sandbox-m2.ll9k.p1.openshiftapps.com:6443/api/v1/namespaces/kahlai-dev/pods/example HTTP/1.1
+Authorization: Bearer sha256~MLdhFEjpCm82R4hHQiqQTmiqIjt7EQ9IMf9IT-mIYmc
+
+
+###
+DELETE https://api.sandbox-m2.ll9k.p1.openshiftapps.com:6443/api/v1/namespaces/kahlai-dev/pods/example HTTP/1.1
+Authorization: Bearer sha256~MLdhFEjpCm82R4hHQiqQTmiqIjt7EQ9IMf9IT-mIYmc
